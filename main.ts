@@ -1,11 +1,41 @@
-controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
-    if (jump < 3) {
-        jump += 1
-        mySprite.vy = -150
+scene.onHitWall(SpriteKind.Player, function (sprite, location) {
+    if (mySprite.isHittingTile(CollisionDirection.Bottom)) {
+        jump = 0
     }
 })
-let jump = 0
+controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
+    if (jump < max_jump) {
+        jump += 1
+        mySprite.vy = -200
+    }
+})
+controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
+    projectile = sprites.createProjectileFromSprite(assets.image`cat litter`, mySprite, 50, 50)
+})
+controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
+    mySprite.setImage(assets.image`cat0`)
+})
+function makeCat () {
+    mySprite = sprites.create(assets.image`cat`, SpriteKind.Player)
+    mySprite.setPosition(80, 45)
+    mySprite.ay = 300
+    controller.moveSprite(mySprite, 100, 0)
+    scene.cameraFollowSprite(mySprite)
+}
+controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
+    mySprite.setImage(assets.image`cat`)
+})
+sprites.onDestroyed(SpriteKind.Player, function (sprite) {
+    mySprite.startEffect(effects.spray, 500)
+    if (mySprite.tileKindAt(TileDirection.Right, sprites.builtin.forestTiles12)) {
+        tiles.setTileAt(mySprite.tilemapLocation().getNeighboringLocation(CollisionDirection.Right), assets.tile`transparency16`)
+        tiles.setWallAt(mySprite.tilemapLocation().getNeighboringLocation(CollisionDirection.Right), false)
+    }
+})
+let projectile: Sprite = null
 let mySprite: Sprite = null
+let max_jump = 0
+let jump = 0
 scene.setBackgroundImage(img`
     1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
     1111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111
@@ -129,8 +159,6 @@ scene.setBackgroundImage(img`
     6666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
     `)
 tiles.setCurrentTilemap(tilemap`level1`)
-mySprite = sprites.create(assets.image`cat`, SpriteKind.Player)
-mySprite.ay = 300
-controller.moveSprite(mySprite, 100, 0)
+makeCat()
 jump = 0
-scene.cameraFollowSprite(mySprite)
+max_jump = 2
