@@ -1,39 +1,59 @@
 scene.onHitWall(SpriteKind.Player, function (sprite, location) {
-    if (mySprite.isHittingTile(CollisionDirection.Bottom)) {
+    if (cat.isHittingTile(CollisionDirection.Bottom)) {
         jump = 0
     }
 })
 controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
     if (jump < max_jump) {
         jump += 1
-        mySprite.vy = -200
+        cat.vy = -200
     }
 })
+function makeEnemies (numEmies: number) {
+    list = [assets.image`snek`, assets.image`beat`]
+    mySprite2 = tiles.getTilesByType(sprites.builtin.forestTiles4)
+    for (let index = 0; index < numEmies; index++) {
+        enemies = sprites.create(list._pickRandom(), SpriteKind.Enemy)
+        tiles.placeOnRandomTile(cat, list.removeAt(randint(0, list.length - 1)))
+    }
+}
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
-    projectile = sprites.createProjectileFromSprite(assets.image`cat litter`, mySprite, 50, 50)
+    projectile = sprites.createProjectileFromSprite(assets.image`cat litter`, cat, 50, 50)
 })
 controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
-    mySprite.setImage(assets.image`cat0`)
+    cat.setImage(assets.image`cat0`)
 })
 function makeCat () {
-    mySprite = sprites.create(assets.image`cat`, SpriteKind.Player)
-    mySprite.setPosition(80, 45)
-    mySprite.ay = 300
-    controller.moveSprite(mySprite, 100, 0)
-    scene.cameraFollowSprite(mySprite)
+    cat = sprites.create(assets.image`cat`, SpriteKind.Player)
+    cat.setPosition(80, 45)
+    cat.ay = 300
+    controller.moveSprite(cat, 100, 0)
+    scene.cameraFollowSprite(cat)
 }
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
-    mySprite.setImage(assets.image`cat`)
+    cat.setImage(assets.image`cat`)
+})
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Player, function (sprite, otherSprite) {
+    if (cat.bottom >= otherSprite.bottom) {
+        sprites.destroy(otherSprite)
+        info.changeLifeBy(-1)
+    } else {
+        sprites.destroy(otherSprite)
+        info.changeScoreBy(1)
+    }
 })
 sprites.onDestroyed(SpriteKind.Player, function (sprite) {
-    mySprite.startEffect(effects.spray, 500)
-    if (mySprite.tileKindAt(TileDirection.Right, sprites.builtin.forestTiles12)) {
-        tiles.setTileAt(mySprite.tilemapLocation().getNeighboringLocation(CollisionDirection.Right), assets.tile`transparency16`)
-        tiles.setWallAt(mySprite.tilemapLocation().getNeighboringLocation(CollisionDirection.Right), false)
+    projectile.startEffect(effects.spray, 1000)
+    if (projectile.tileKindAt(TileDirection.Right, sprites.builtin.forestTiles12)) {
+        tiles.setTileAt(projectile.tilemapLocation().getNeighboringLocation(CollisionDirection.Right), assets.tile`transparency16`)
+        tiles.setWallAt(projectile.tilemapLocation().getNeighboringLocation(CollisionDirection.Right), false)
     }
 })
 let projectile: Sprite = null
-let mySprite: Sprite = null
+let enemies: Sprite = null
+let mySprite2: tiles.Location[] = []
+let list: Image[] = []
+let cat: Sprite = null
 let max_jump = 0
 let jump = 0
 scene.setBackgroundImage(img`
@@ -160,5 +180,6 @@ scene.setBackgroundImage(img`
     `)
 tiles.setCurrentTilemap(tilemap`level1`)
 makeCat()
+makeEnemies(1)
 jump = 0
 max_jump = 2
