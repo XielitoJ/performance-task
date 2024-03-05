@@ -10,7 +10,7 @@ controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
     }
 })
 function makeEnemies (numEmies: number) {
-    list = [assets.image`snek`, assets.image`beat`]
+    list = [assets.image`beast`, assets.image`snek`]
     mySprite2 = tiles.getTilesByType(sprites.builtin.forestTiles4)
     for (let index = 0; index < numEmies; index++) {
         enemies = sprites.create(list._pickRandom(), SpriteKind.Enemy)
@@ -18,7 +18,7 @@ function makeEnemies (numEmies: number) {
     }
 }
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
-    projectile = sprites.createProjectileFromSprite(assets.image`cat litter`, cat, 50, 50)
+    projectile = sprites.createProjectileFromSprite(assets.image`shoot`, cat, 75, 0)
 })
 controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
     cat.setImage(assets.image`cat0`)
@@ -42,8 +42,8 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Player, function (sprite, otherS
         info.changeScoreBy(1)
     }
 })
-sprites.onDestroyed(SpriteKind.Player, function (sprite) {
-    projectile.startEffect(effects.spray, 1000)
+sprites.onDestroyed(SpriteKind.Projectile, function (sprite) {
+    projectile.startEffect(effects.spray, 500)
     if (projectile.tileKindAt(TileDirection.Right, sprites.builtin.forestTiles12)) {
         tiles.setTileAt(projectile.tilemapLocation().getNeighboringLocation(CollisionDirection.Right), assets.tile`transparency16`)
         tiles.setWallAt(projectile.tilemapLocation().getNeighboringLocation(CollisionDirection.Right), false)
