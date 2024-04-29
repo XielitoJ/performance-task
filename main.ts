@@ -1,24 +1,49 @@
-scene.onHitWall(SpriteKind.Player, function (sprite, location) {
-    if (cat.isHittingTile(CollisionDirection.Bottom)) {
-        jump = 0
-    }
-})
 controller.up.onEvent(ControllerButtonEvent.Pressed, function () {
     if (jump < max_jump) {
         jump += 1
         cat.vy = -200
     }
 })
+scene.onHitWall(SpriteKind.Player, function (sprite, location) {
+    if (cat.isHittingTile(CollisionDirection.Bottom)) {
+        jump = 0
+    }
+})
 function makeEnemies (numEmies: number) {
-    list = [assets.image`beast`, assets.image`snek`]
-    mySprite2 = tiles.getTilesByType(sprites.builtin.forestTiles4)
+    list = [assets.image`beast`, assets.image`snek`, img`
+        . . f f f . . . . . . . . . . 
+        f f f c c . . . . . . . . f f 
+        f f c c . . c c . . . f c b c 
+        f f c 3 c c 3 c c f f b b b . 
+        f f b 3 b c 3 b c f b b c c . 
+        . c b b b b b b c f b c b c . 
+        . c b b b b b b c b b c b b . 
+        c b 1 b b b 1 b b b c c c . . 
+        c b b b b b b b b c c c . . . 
+        f b c b b b c b b b b f . . . 
+        f b 1 f f f 1 b b b b f . . . 
+        . f b b b b b b b b c f . . . 
+        . . f b b b b b b c f . . . . 
+        . . . f f f f f f f . . . . . 
+        . . . . . . . . . . . . . . . 
+        `]
+    mySprite2 = tiles.getTilesByType(sprites.builtin.forestTiles8)
     for (let index = 0; index < numEmies; index++) {
         enemies = sprites.create(list._pickRandom(), SpriteKind.Enemy)
-        tiles.placeOnRandomTile(cat, list.removeAt(randint(0, list.length - 1)))
+        enemies.ay = 300
+        enemies.setVelocity(30, 0)
+        tiles.placeOnRandomTile(enemies, sprites.builtin.forestTiles8)
     }
 }
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     projectile = sprites.createProjectileFromSprite(assets.image`shoot`, cat, 75, 0)
+})
+scene.onOverlapTile(SpriteKind.Player, sprites.dungeon.hazardLava0, function (sprite, location) {
+    game.setGameOverMessage(false, "You lose, try again :(")
+    game.gameOver(false)
+})
+scene.onOverlapTile(SpriteKind.Enemy, assets.tile`water2`, function (sprite, location) {
+    sprites.destroy(sprite)
 })
 controller.left.onEvent(ControllerButtonEvent.Pressed, function () {
     cat.setImage(assets.image`cat0`)
@@ -30,25 +55,64 @@ function makeCat () {
     controller.moveSprite(cat, 100, 0)
     scene.cameraFollowSprite(cat)
 }
+scene.onOverlapTile(SpriteKind.Player, assets.tile`water2`, function (sprite, location) {
+    game.setGameOverMessage(false, "You lose, try again :(")
+    game.gameOver(false)
+})
+scene.onOverlapTile(SpriteKind.Enemy, sprites.dungeon.hazardLava0, function (sprite, location) {
+    sprites.destroy(sprite)
+})
 controller.right.onEvent(ControllerButtonEvent.Pressed, function () {
     cat.setImage(assets.image`cat`)
 })
-sprites.onOverlap(SpriteKind.Player, SpriteKind.Player, function (sprite, otherSprite) {
-    if (cat.bottom >= otherSprite.bottom) {
-        sprites.destroy(otherSprite)
-        info.changeLifeBy(-1)
-    } else {
-        sprites.destroy(otherSprite)
-        info.changeScoreBy(1)
-    }
+scene.onOverlapTile(SpriteKind.Player, sprites.dungeon.hazardWater, function (sprite, location) {
+    game.setGameOverMessage(false, "You lose, try again :(")
+    game.gameOver(false)
 })
+scene.onOverlapTile(SpriteKind.Enemy, sprites.dungeon.hazardWater, function (sprite, location) {
+    sprites.destroy(sprite)
+})
+function moveEnemies () {
+    for (let value of tiles.getTilesByType(assets.tile`transparency16`)) {
+        enemies = sprites.create(list._pickRandom(), SpriteKind.Enemy)
+        tiles.placeOnTile(enemies, value)
+        tiles.setTileAt(value, assets.tile`transparency16`)
+        if (Math.percentChance(50)) {
+            enemies.x = 50
+        } else {
+            enemies.x = -50
+        }
+        enemies.setBounceOnWall(true)
+    }
+    for (let value of tiles.getTilesByType(assets.tile`transparency16`)) {
+        bounce = sprites.create(list._pickRandom(), SpriteKind.Enemy)
+        tiles.placeOnTile(bounce, value)
+        tiles.setTileAt(value, assets.tile`transparency16`)
+        bounce.setFlag(SpriteFlag.Invisible, true)
+    }
+}
 sprites.onDestroyed(SpriteKind.Projectile, function (sprite) {
     projectile.startEffect(effects.spray, 500)
-    if (projectile.tileKindAt(TileDirection.Right, sprites.builtin.forestTiles12)) {
+    if (projectile.tileKindAt(TileDirection.Right, sprites.builtin.forestTiles8)) {
         tiles.setTileAt(projectile.tilemapLocation().getNeighboringLocation(CollisionDirection.Right), assets.tile`transparency16`)
         tiles.setWallAt(projectile.tilemapLocation().getNeighboringLocation(CollisionDirection.Right), false)
     }
 })
+scene.onOverlapTile(SpriteKind.Player, sprites.dungeon.stairSouth, function (sprite, location) {
+    game.gameOver(true)
+    game.setGameOverMessage(true, "You Win!")
+    game.setGameOverEffect(true, effects.confetti)
+})
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
+    if (cat.right > otherSprite.bottom) {
+        sprites.destroy(otherSprite)
+        info.changeScoreBy(1)
+    } else {
+        sprites.destroy(otherSprite)
+        info.changeLifeBy(-1)
+    }
+})
+let bounce: Sprite = null
 let projectile: Sprite = null
 let enemies: Sprite = null
 let mySprite2: tiles.Location[] = []
@@ -180,6 +244,18 @@ scene.setBackgroundImage(img`
     `)
 tiles.setCurrentTilemap(tilemap`level1`)
 makeCat()
-makeEnemies(1)
+makeEnemies(randint(5, 25))
 jump = 0
 max_jump = 2
+info.setLife(3)
+info.setScore(0)
+game.splash("Jump on enemies for points and shoot blocks with A", "Don't go in water or lava!")
+game.onUpdate(function () {
+    for (let value of sprites.allOfKind(SpriteKind.Enemy)) {
+        if (value.vx < 0 && (value.tileKindAt(TileDirection.Bottom, assets.tile`transparency16`) || value.isHittingTile(CollisionDirection.Left))) {
+            value.vx = value.vx * -1
+        } else if (value.vx > 0 && (value.tileKindAt(TileDirection.Bottom, assets.tile`transparency16`) || value.isHittingTile(CollisionDirection.Right))) {
+            value.vx = value.vx * -1
+        }
+    }
+})
